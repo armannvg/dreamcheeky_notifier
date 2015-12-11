@@ -12,11 +12,14 @@ INIT_PACKET2 = (0x00, 0x01, 0x29, 0x00, 0xB8, 0x54, 0x2C, 0x04)
 
 class DreamcheekyNotifier(BaseNotifier):
     def __init__(self):
-        """ Acquire a handle to an attached dreamcheeky device """
-        self.device = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
+        """ Acquire a handle to all attached dreamcheeky devices """
+        self.allDevices = usb.core.find(find_all=True,idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
 
-        if self.device is None:
+        if not self.allDevices:
+            print "No devices found!"
             pass
+
+        self.move_to_next()
 
     def init_device(self):
         """ Initialize the device using the two init packets """
@@ -27,6 +30,13 @@ class DreamcheekyNotifier(BaseNotifier):
         self.device.set_configuration()
         self.device.ctrl_transfer(0x21, 0x09, 0x81, 0, INIT_PACKET1, 100)
         self.device.ctrl_transfer(0x21, 0x09, 0x81, 0, INIT_PACKET2, 100) 
+
+    def move_to_next(self):
+        """ Get a handle on the next notifier in line """
+        try:
+            self.device = self.allDevices.next()
+        except StopIteration:
+            print "No more devices found, cannot move to the next one"
 
 
     def set_rgb(self, red, green, blue):
